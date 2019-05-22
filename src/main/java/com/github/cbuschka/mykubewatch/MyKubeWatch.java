@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class MyKubeWatchMain
+public class MyKubeWatch
 {
 	public void run() throws IOException, ApiException
 	{

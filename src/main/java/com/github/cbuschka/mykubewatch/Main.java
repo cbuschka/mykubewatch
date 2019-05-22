@@ -8,7 +8,7 @@ public class Main
 {
 	public static void main(String[] args) throws IOException, ApiException
 	{
-		MyKubeWatchMain myKubeWatch = new MyKubeWatchMain();
+		MyKubeWatch myKubeWatch = new MyKubeWatch();
 		myKubeWatch.run();
 	}
 }

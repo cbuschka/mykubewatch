@@ -8,7 +8,7 @@
 kubectl apply -f mykubewatch-all.yaml
 ```
 
-## Docker Repo
+## Docker Image
 [cbuschka/mykubewatch](https://hub.docker.com/r/cbuschka/mykubewatch)
 
 ## License

@@ -9,14 +9,20 @@ import io.kubernetes.client.models.V1ConfigMap;
 import io.kubernetes.client.models.V1ConfigMapList;
 import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.Watch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class MyKubeWatch
 {
+	private static Logger log = LoggerFactory.getLogger(MyKubeWatch.class);
+
 	public void run() throws IOException, ApiException
 	{
 		ApiClient client = Config.defaultClient();
@@ -26,13 +32,13 @@ public class MyKubeWatch
 
 		MyKubeWatchConfig config = loadConfig(api);
 
-
+		Set<String> seenSet = new HashSet<>();
 		Watch<?> watch = null;
 		try
 		{
 			watch = Watch.createWatch(
 					client,
-					api.listPodForAllNamespacesCall(null, null, null, null, 5, null, null, null, Boolean.TRUE, null, null),
+					api.listPodForAllNamespacesCall(null, null, null, null, null, null, null, null, Boolean.TRUE, null, null),
 					new TypeToken<Watch.Response<?>>()
 					{
 					}.getType());
@@ -50,12 +56,33 @@ public class MyKubeWatch
 						String namespace = kObject.get("metadata").getString("namespace");
 						if (isIncluded(response.type, kind, namespace, name, kObject.asMap(), config))
 						{
-							eventHandler.handle(response.type, kind, namespace, name, kObject.asMap());
+							String identifier = namespace + ":" + name + ":" + kind;
+							if ("ADDED".equals(response.type))
+							{
+								if (!seenSet.contains(identifier))
+								{
+									seenSet.add(identifier);
+									eventHandler.handle(response.type, kind, namespace, name, kObject.asMap());
+								}
+								else
+								{
+									log.info("Skipped {} of {}, because already known.", response.type, identifier);
+								}
+							}
+							else if ("DELETED".equals(response.type))
+							{
+								eventHandler.handle(response.type, kind, namespace, name, kObject.asMap());
+								seenSet.remove(identifier);
+							}
+							else
+							{
+								seenSet.add(identifier);
+								eventHandler.handle(response.type, kind, namespace, name, kObject.asMap());
+							}
 						}
 					});
 				}
 			};
-			// new Thread(watchTask).start();
 			watchTask.run();
 		}
 		finally

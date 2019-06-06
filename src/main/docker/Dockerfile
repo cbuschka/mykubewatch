@@ -1,4 +1,4 @@
-FROM openjdk:8-slim-stretch
+FROM openjdk:11-slim-stretch
 
 COPY /mykubewatch-jar-with-dependencies.jar /
 
